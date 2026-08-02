@@ -1,0 +1,11 @@
+{
+  "type": "glaggleland:glaggleland",
+  "generator": {
+    "type": "minecraft:noise",
+    "settings": "glaggleland:blibbles_field_noise",
+    "biome_source": {
+      "type": "minecraft:fixed",
+      "biome": "glaggleland:blibbles_field"
+    }
+  }
+}
