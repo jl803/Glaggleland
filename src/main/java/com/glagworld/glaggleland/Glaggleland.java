@@ -2,6 +2,7 @@ package com.glagworld.glaggleland;
 
 import com.glagworld.glaggleland.entity.ModEntities;
 import com.glagworld.glaggleland.entity.client.giggler.GigglerRenderer;
+import com.glagworld.glaggleland.entity.client.glagglecannon.GlaggleCannonRenderer;
 import net.minecraft.client.renderer.entity.EntityRenderers;
 import net.minecraft.world.item.SpawnEggItem;
 import net.neoforged.fml.common.EventBusSubscriber;
@@ -90,6 +91,7 @@ public class Glaggleland {
             //ModItemProperties.addCustomItemProperties();
 
             EntityRenderers.register(ModEntities.GIGGLER.get(), GigglerRenderer::new);
+            EntityRenderers.register(ModEntities.GLAGGLE_CANNON.get(), GlaggleCannonRenderer::new);
 
         }
     }
