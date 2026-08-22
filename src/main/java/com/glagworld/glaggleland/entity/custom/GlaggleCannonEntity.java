@@ -32,12 +32,22 @@ public class GlaggleCannonEntity extends Mob {
 
     public GlaggleCannonEntity(EntityType<?> entityType, Level level) {
         super((EntityType<? extends Mob>) entityType, level);
+        setPersistenceRequired();
     }
 
+    @Override
+    public boolean removeWhenFarAway(double distance) {
+        if (sittingPlayer == null) super.removeWhenFarAway(distance);
+        return false;
+    }
 
     @Override
     public void tick() {
         super.tick();
+
+        if (this.level().isClientSide()) {
+            return;
+        }
 
         if (timer > 0) {
             timer--;
@@ -103,9 +113,21 @@ public class GlaggleCannonEntity extends Mob {
             sittingPlayer.displayClientMessage(Component.literal("Ohhhh I'm launching it"), true);
 
             waitingToCheck = true;
-            timer = 10;
+            timer = 60;
 
         }
+    }
+
+    @Override
+    public void onRemovedFromLevel() {
+        System.out.print("Removal reason: ");
+        System.out.println(getRemovalReason());
+        if(!this.level().isClientSide() && getRemovalReason() == RemovalReason.UNLOADED_TO_CHUNK && sittingPlayer != null) {
+            sendPlayer();
+            sittingPlayer = null;
+            timer = -1;
+        }
+        super.onRemovedFromLevel();
     }
 
     @Override
