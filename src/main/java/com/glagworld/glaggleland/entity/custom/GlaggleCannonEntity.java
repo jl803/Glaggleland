@@ -1,6 +1,8 @@
 package com.glagworld.glaggleland.entity.custom;
 
 import net.minecraft.nbt.CompoundTag;
+import net.minecraft.network.syncher.EntityDataAccessor;
+import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
@@ -27,12 +29,29 @@ public class GlaggleCannonEntity extends Mob {
 
     private Player sittingPlayer = null;
 
+
+    private boolean facingUp = false;
+
     private boolean waitingToLaunch = false;
     private boolean waitingToCheck = false;
+
+    private float turning_progress = 0.0f;
+
+
+    private Vec3 launch_direction;
 
     public GlaggleCannonEntity(EntityType<?> entityType, Level level) {
         super((EntityType<? extends Mob>) entityType, level);
         setPersistenceRequired();
+    }
+
+    private static final EntityDataAccessor<Boolean> FACING_UP =
+            SynchedEntityData.defineId(GlaggleCannonEntity.class, EntityDataSerializers.BOOLEAN);
+
+    @Override
+    protected void defineSynchedData(SynchedEntityData.Builder builder) {
+        super.defineSynchedData(builder);
+        builder.define(FACING_UP, false);
     }
 
     @Override
@@ -55,7 +74,7 @@ public class GlaggleCannonEntity extends Mob {
 
         if (waitingToCheck == true && sittingPlayer != null) {
 
-            Vec3 appliedForce = new Vec3(0.0,10000.0,1.0);
+            Vec3 appliedForce = new Vec3(launch_direction.x * 2.0, launch_direction.y * 10000.0, launch_direction.z * 2.0);
             sittingPlayer.setDeltaMovement(sittingPlayer.getDeltaMovement().add(appliedForce));
             sittingPlayer.hurtMarked = true;
             sittingPlayer.hasImpulse = true;
@@ -101,8 +120,10 @@ public class GlaggleCannonEntity extends Mob {
         if (isVehicle()) {
             Entity passenger = getFirstPassenger();
 
+            launch_direction = this.getLookAngle().normalize().yRot((float) Math.toRadians(90)); //offsets facing direction because I messed it up lol
+
             Vec3 currentMotion = passenger.getDeltaMovement();
-            Vec3 appliedForce = new Vec3(0.0,10000.0,1.0);
+            Vec3 appliedForce = new Vec3(launch_direction.x * 2.0, 10000.0, launch_direction.z * 2.0);
 
             passenger.stopRiding();
 
@@ -142,6 +163,8 @@ public class GlaggleCannonEntity extends Mob {
             if (glaggleCount >= glaggleThreshold) {
                 player.displayClientMessage(Component.literal("Welcome to Glaggleland!"), false);
 
+                setFacingUp(true);
+
 
                 player.startRiding(this);
                 sittingPlayer = player;
@@ -163,4 +186,11 @@ public class GlaggleCannonEntity extends Mob {
 
         return super.mobInteract(player, hand);
     }
+
+
+    public boolean getFacingUp() { return this.entityData.get(FACING_UP); }
+
+    public void setFacingUp(boolean value) { this.entityData.set(FACING_UP, value); }
+
+    public float getTurningProgress() { return turning_progress; }
 }

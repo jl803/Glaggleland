@@ -3,7 +3,7 @@ package com.glagworld.glaggleland.entity.client.glagglecannon;// Made with Block
 // Paste this class into your mod and generate all required imports
 
 
-import com.glagworld.glaggleland.Glaggleland;
+import com.glagworld.glaggleland.entity.custom.GlaggleCannonEntity;
 import com.mojang.blaze3d.vertex.PoseStack;
 import com.mojang.blaze3d.vertex.VertexConsumer;
 import net.minecraft.client.model.EntityModel;
@@ -12,11 +12,9 @@ import net.minecraft.client.model.geom.ModelPart;
 import net.minecraft.client.model.geom.PartPose;
 import net.minecraft.client.model.geom.builders.*;
 import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.Mob;
 
-import static net.neoforged.neoforge.internal.versions.neoforge.NeoForgeVersion.MOD_ID;
-
-public class GlaggleCannonModel<T extends Entity> extends EntityModel<T> {
+public class GlaggleCannonModel<G extends Mob> extends EntityModel<GlaggleCannonEntity> {
     // This layer location should be baked with EntityRendererProvider.Context in the entity renderer and passed into this model's constructor
     public static final ModelLayerLocation LAYER_LOCATION = new ModelLayerLocation(ResourceLocation.fromNamespaceAndPath("modid", "glagglecannon"), "main");
     private final ModelPart WheelLeft;
@@ -80,7 +78,12 @@ public class GlaggleCannonModel<T extends Entity> extends EntityModel<T> {
     }
 
     @Override
-    public void setupAnim(Entity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+    public void setupAnim(GlaggleCannonEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
+        Barrel.resetPose();
+        if (entity.getFacingUp()) {
+            Barrel.zRot = 100.0f;
+        }
+
 
     }
 
