@@ -161,8 +161,9 @@ public class GlaggleCannonEntity extends Mob {
         applyLaunchVelocity(carrier);
     }
 
+
     private void applyLaunchVelocity(Entity entity) {
-        Vec3 forward = Vec3.directionFromRotation(0.0F, this.getYRot()).normalize().scale(4.0);
+        Vec3 forward = this.getLookAngle().normalize().yRot((float) Math.toRadians(90));
         Vec3 launchVelocity = new Vec3(forward.x, 10.0, forward.z);
 
         entity.setDeltaMovement(launchVelocity);

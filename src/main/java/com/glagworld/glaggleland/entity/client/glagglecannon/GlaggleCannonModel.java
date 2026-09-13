@@ -83,8 +83,6 @@ public class GlaggleCannonModel<G extends Mob> extends EntityModel<GlaggleCannon
         if (entity.getFacingUp()) {
             Barrel.zRot = 100.0f;
         }
-
-
     }
 
 
