@@ -9,7 +9,9 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.MoverType;
 
+import net.minecraft.world.entity.decoration.ArmorStand;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.level.Level;
 
@@ -34,6 +36,8 @@ public class GlaggleCannonEntity extends Mob {
 
     private boolean waitingToLaunch = false;
     private boolean waitingToCheck = false;
+    private ArmorStand launchCarrier = null;
+    private int carrierLaunchTicks = 0;
 
     private float turning_progress = 0.0f;
 
@@ -72,13 +76,9 @@ public class GlaggleCannonEntity extends Mob {
             timer--;
         }
 
-        if (waitingToCheck == true && sittingPlayer != null) {
-
-            Vec3 appliedForce = new Vec3(launch_direction.x * 2.0, launch_direction.y * 10000.0, launch_direction.z * 2.0);
-            sittingPlayer.setDeltaMovement(sittingPlayer.getDeltaMovement().add(appliedForce));
-            sittingPlayer.hurtMarked = true;
-            sittingPlayer.hasImpulse = true;
-
+        if (waitingToCheck && launchCarrier != null && carrierLaunchTicks > 0) {
+            applyLaunchVelocity(launchCarrier);
+            carrierLaunchTicks--;
         }
 
         if (timer == 0 && waitingToLaunch) {
@@ -99,9 +99,12 @@ public class GlaggleCannonEntity extends Mob {
 
         sittingPlayer.displayClientMessage(Component.literal("Your position is:" + playerPos), false);
         if (playerPos.y < 100) {
+            clearLaunchCarrier();
             sittingPlayer = null;
             return;
         }
+
+        clearLaunchCarrier();
 
         DimensionTransition transition = new DimensionTransition(
                 getServer().getLevel(Level.NETHER),
@@ -126,10 +129,7 @@ public class GlaggleCannonEntity extends Mob {
             Vec3 appliedForce = new Vec3(launch_direction.x * 2.0, 10000.0, launch_direction.z * 2.0);
 
             passenger.stopRiding();
-
-            passenger.setDeltaMovement(currentMotion.add(appliedForce));
-            passenger.hurtMarked = true;
-            passenger.hasImpulse = true;
+            startCarrierLaunch(passenger);
 
             sittingPlayer.displayClientMessage(Component.literal("Ohhhh I'm launching it"), true);
 
@@ -137,6 +137,48 @@ public class GlaggleCannonEntity extends Mob {
             timer = 60;
 
         }
+    }
+
+    private void startCarrierLaunch(Entity passenger) {
+        ArmorStand carrier = new ArmorStand(EntityType.ARMOR_STAND, this.level());
+
+        carrier.moveTo(passenger.getX(), passenger.getY(), passenger.getZ(), passenger.getYRot(), passenger.getXRot());
+        carrier.setInvisible(true);
+        carrier.setNoGravity(true);
+        carrier.setInvulnerable(true);
+        carrier.setSilent(true);
+
+        this.level().addFreshEntity(carrier);
+        boolean startedRiding = passenger.startRiding(carrier, true);
+
+        if (!startedRiding) {
+            carrier.discard();
+            return;
+        }
+
+        launchCarrier = carrier;
+        carrierLaunchTicks = 120;
+        applyLaunchVelocity(carrier);
+    }
+
+    private void applyLaunchVelocity(Entity entity) {
+        Vec3 forward = Vec3.directionFromRotation(0.0F, this.getYRot()).normalize().scale(4.0);
+        Vec3 launchVelocity = new Vec3(forward.x, 10.0, forward.z);
+
+        entity.setDeltaMovement(launchVelocity);
+        entity.move(MoverType.SELF, launchVelocity);
+        entity.fallDistance = 0.0F;
+        entity.hurtMarked = true;
+        entity.hasImpulse = true;
+    }
+
+    private void clearLaunchCarrier() {
+        if (launchCarrier != null) {
+            launchCarrier.discard();
+            launchCarrier = null;
+        }
+
+        carrierLaunchTicks = 0;
     }
 
     @Override
