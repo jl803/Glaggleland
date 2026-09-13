@@ -39,9 +39,6 @@ public class GlaggleCannonEntity extends Mob {
     private ArmorStand launchCarrier = null;
     private int carrierLaunchTicks = 0;
 
-    private float turning_progress = 0.0f;
-
-
     private Vec3 launch_direction;
 
     public GlaggleCannonEntity(EntityType<?> entityType, Level level) {
@@ -49,13 +46,18 @@ public class GlaggleCannonEntity extends Mob {
         setPersistenceRequired();
     }
 
+
     private static final EntityDataAccessor<Boolean> FACING_UP =
             SynchedEntityData.defineId(GlaggleCannonEntity.class, EntityDataSerializers.BOOLEAN);
+
+    private static final EntityDataAccessor<Float> TURNING_PROGRESS =
+            SynchedEntityData.defineId(GlaggleCannonEntity.class, EntityDataSerializers.FLOAT);
 
     @Override
     protected void defineSynchedData(SynchedEntityData.Builder builder) {
         super.defineSynchedData(builder);
         builder.define(FACING_UP, false);
+        builder.define(TURNING_PROGRESS, 0.0f);
     }
 
     @Override
@@ -65,14 +67,33 @@ public class GlaggleCannonEntity extends Mob {
     }
 
     @Override
+    public void addAdditionalSaveData(CompoundTag compound) {
+        super.addAdditionalSaveData(compound);
+        compound.putBoolean("FacingUp", getFacingUp());
+    }
+
+    @Override
+    public void readAdditionalSaveData(CompoundTag compound) {
+        super.readAdditionalSaveData(compound);
+
+        setFacingUp(compound.getBoolean("FacingUp"));
+
+        if (getFacingUp()) {
+            setTurningProgress(targetAngle);
+            glaggleCount = glaggleThreshold;
+        }
+    }
+
+    @Override
     public void tick() {
         super.tick();
 
         // Client side animation
         if (this.level().isClientSide) {
 
-            if (getFacingUp() && turning_progress <= targetAngle) {
-                turning_progress = (float) (Math.min(turning_progress+.5,targetAngle) * turnSpeed);
+
+            if (getFacingUp() && getTurningProgress() <= targetAngle) {
+                setTurningProgress((float) (Math.min((getTurningProgress()+.5)* turnSpeed,targetAngle)));
             }
 
         }
@@ -173,7 +194,7 @@ public class GlaggleCannonEntity extends Mob {
 
     private void applyLaunchVelocity(Entity entity) {
         Vec3 forward = this.getLookAngle().normalize().yRot((float) Math.toRadians(90)).scale(8.0);
-        Vec3 launchVelocity = new Vec3(forward.x, 4.0, forward.z);
+        Vec3 launchVelocity = new Vec3(forward.x, 6.0, forward.z);
 
         entity.setDeltaMovement(launchVelocity);
         entity.move(MoverType.SELF, launchVelocity);
@@ -245,5 +266,7 @@ public class GlaggleCannonEntity extends Mob {
 
     public void setFacingUp(boolean value) { this.entityData.set(FACING_UP, value); }
 
-    public float getTurningProgress() { return turning_progress; }
+    public void setTurningProgress(float value) { this.entityData.set(TURNING_PROGRESS,value); }
+
+    public float getTurningProgress() { return this.entityData.get(TURNING_PROGRESS); }
 }
