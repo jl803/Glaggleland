@@ -24,15 +24,15 @@ import net.minecraft.world.phys.Vec3;
 
 public class GlaggleCannonEntity extends Mob {
 
-    private int glaggleCount = 0;
-    private int glaggleThreshold = 10;
+    private int glaggleCount = 0; // Amount of times the cannon has been clicked on
+    private int glaggleThreshold = 10; // Number of clicks/count needed to activate the cannon
 
     private int timer = -1;
 
     private Player sittingPlayer = null;
 
-
-    private boolean facingUp = false;
+    private double turnSpeed = 1.0;
+    private float targetAngle = 50.0f;
 
     private boolean waitingToLaunch = false;
     private boolean waitingToCheck = false;
@@ -67,6 +67,15 @@ public class GlaggleCannonEntity extends Mob {
     @Override
     public void tick() {
         super.tick();
+
+        // Client side animation
+        if (this.level().isClientSide) {
+
+            if (getFacingUp() && turning_progress <= targetAngle) {
+                turning_progress = (float) (Math.min(turning_progress+.5,targetAngle) * turnSpeed);
+            }
+
+        }
 
         if (this.level().isClientSide()) {
             return;
@@ -206,7 +215,6 @@ public class GlaggleCannonEntity extends Mob {
             if (glaggleCount >= glaggleThreshold) {
                 player.displayClientMessage(Component.literal("Welcome to Glaggleland!"), false);
 
-                setFacingUp(true);
 
 
                 player.startRiding(this);
@@ -222,6 +230,8 @@ public class GlaggleCannonEntity extends Mob {
             glaggleCount++;
 
             player.displayClientMessage(Component.literal("Glaggle power charged: " + (float) glaggleCount * 100 / glaggleThreshold+ "%!!"), false);
+
+            if (glaggleCount >= glaggleThreshold) setFacingUp(true);
 
             return InteractionResult.SUCCESS;
 

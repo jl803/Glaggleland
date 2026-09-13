@@ -81,7 +81,7 @@ public class GlaggleCannonModel<G extends Mob> extends EntityModel<GlaggleCannon
     public void setupAnim(GlaggleCannonEntity entity, float limbSwing, float limbSwingAmount, float ageInTicks, float netHeadYaw, float headPitch) {
         Barrel.resetPose();
         if (entity.getFacingUp()) {
-            Barrel.zRot = 100.0f;
+            Barrel.zRot = (float) Math.toRadians(entity.getTurningProgress()) * -1;
         }
     }
 
