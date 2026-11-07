@@ -119,9 +119,11 @@ public class GlaggleCannonEntity extends Mob {
         if (waitingToCheck && launchCarrier != null && carrierLaunchTicks > 0) {
             applyLaunchVelocity(launchCarrier);
 
-            carrierLaunchTicks--;
+            if (!waitingToCheck) {
+                return;
+            }
 
-            if (LAUNCH_LENGTH - carrierLaunchTicks > 5 && (launchCarrier.horizontalCollision || launchCarrier.verticalCollision)) launchedCollision();
+            carrierLaunchTicks--;
 
         }
 
@@ -142,19 +144,21 @@ public class GlaggleCannonEntity extends Mob {
 
         sittingPlayer.displayClientMessage(Component.literal("You collided!"), false);
 
-        double posX = sittingPlayer.getX();
-        double posY = sittingPlayer.getY();
-        double posZ = sittingPlayer.getZ();
-
-        this.level().explode(
-                sittingPlayer,
-                posX,posY,posZ,
-                100,
-                Level.ExplosionInteraction.BLOCK
-        );
+        double posX = launchCarrier.getX();
+        double posY = launchCarrier.getY();
+        double posZ = launchCarrier.getZ();
 
         sittingPlayer.stopRiding();
-        launchCarrier.discard();
+        sittingPlayer.teleportTo(posX, posY, posZ);
+
+        this.level().explode(
+                launchCarrier,
+                posX,posY,posZ,
+                100,
+                Level.ExplosionInteraction.TNT
+        );
+
+        clearLaunchCarrier();
 
         waitingToCheck = false;
         timer = -1;
@@ -167,7 +171,6 @@ public class GlaggleCannonEntity extends Mob {
         Vec3 playerPos = sittingPlayer.getPosition(1);
 
 
-        sittingPlayer.displayClientMessage(Component.literal("Your position is:" + playerPos), false);
         if (playerPos.y < 100) {
             clearLaunchCarrier();
             sittingPlayer = null;
@@ -224,13 +227,10 @@ public class GlaggleCannonEntity extends Mob {
             Vec3 currentMotion = passenger.getDeltaMovement();
             Vec3 appliedForce = new Vec3(launch_direction.x * 2.0, 10000.0, launch_direction.z * 2.0);
 
-            passenger.stopRiding();
-            startCarrierLaunch(passenger);
-
             sittingPlayer.displayClientMessage(Component.literal("Ohhhh I'm launching it"), true);
 
-            waitingToCheck = true;
-            timer = 60;
+            passenger.stopRiding();
+            startCarrierLaunch(passenger);
 
         }
     }
@@ -254,6 +254,8 @@ public class GlaggleCannonEntity extends Mob {
 
         launchCarrier = carrier;
         carrierLaunchTicks = LAUNCH_LENGTH;
+        waitingToCheck = true;
+        timer = 60;
         applyLaunchVelocity(carrier);
     }
 
@@ -264,6 +266,12 @@ public class GlaggleCannonEntity extends Mob {
 
         entity.setDeltaMovement(launchVelocity);
         entity.move(MoverType.SELF, launchVelocity);
+
+        if (entity.horizontalCollision || entity.verticalCollision) {
+            launchedCollision();
+            return;
+        }
+
         entity.fallDistance = 0.0F;
         entity.hurtMarked = true;
         entity.hasImpulse = true;
