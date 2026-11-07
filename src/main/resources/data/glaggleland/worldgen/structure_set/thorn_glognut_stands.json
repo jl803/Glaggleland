@@ -1,0 +1,16 @@
+{
+  "structures": [
+    {
+      "structure": "glaggleland:thorn_glognut_stand",
+      "weight": 1
+    }
+  ],
+  "placement": {
+    "type": "minecraft:random_spread",
+    "spacing": 20,
+    "separation": 8,
+    "frequency": 0.5,
+    "frequency_reduction_method": "default",
+    "salt": 92837461
+  }
+}
