@@ -1,11 +1,17 @@
 package com.glagworld.glaggleland.entity.custom;
 
+import net.minecraft.core.registries.Registries;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
+import net.minecraft.resources.ResourceKey;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.server.packs.resources.Resource;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.effect.MobEffects;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.Mob;
@@ -20,6 +26,7 @@ import net.minecraft.network.chat.Component;
 import net.minecraft.world.level.portal.DimensionTransition;
 import net.minecraft.world.phys.Vec3;
 
+import java.util.random.RandomGenerator;
 
 
 public class GlaggleCannonEntity extends Mob {
@@ -136,17 +143,43 @@ public class GlaggleCannonEntity extends Mob {
 
         clearLaunchCarrier();
 
+        ResourceKey<Level> dimension = ResourceKey.create(
+                Registries.DIMENSION,
+                ResourceLocation.fromNamespaceAndPath("glaggleland","glaggleland")
+        );
+
+        Vec3 cannonPosition = new Vec3(self().position().toVector3f());
+
+        RandomGenerator randomGenerator = RandomGenerator.getDefault();
+
+        Vec3 newPosition = new Vec3(
+                cannonPosition.x + randomGenerator.nextFloat(30,200),
+                randomGenerator.nextFloat(200,300),
+                cannonPosition.z + randomGenerator.nextFloat(30,200));
+
         DimensionTransition transition = new DimensionTransition(
-                getServer().getLevel(Level.NETHER),
-                self().position(),
+                getServer().getLevel(dimension),
+                newPosition,
                 Vec3.ZERO,
                 sittingPlayer.getYRot(),
                 sittingPlayer.getXRot(),
                 DimensionTransition.PLAY_PORTAL_SOUND
         );
 
+        MobEffectInstance effectInstance = new MobEffectInstance(
+                MobEffects.SLOW_FALLING,
+                600,
+                -1,
+                false,
+                false
+        );
+
+
+
         sittingPlayer.changeDimension(transition);
+        sittingPlayer.addEffect(effectInstance);
         sittingPlayer = null;
+
     }
 
     private void launchPlayer() {
